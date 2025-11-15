@@ -1,14 +1,3 @@
-Here is a **fully rewritten, polished, production-grade README** for your GitHub repo — reflecting:
-
-✅ Gemini File Search API (tool calling + file storage)
-✅ Supabase Auth (email/password sign-in & sign-up)
-✅ Proper user management
-✅ Landing page + login page + dashboard UI
-✅ Your real multi-page app (landing → auth → dashboard → store → file upload → query)
-✅ Clean, professional documentation suitable for users AND contributors
-
----
-
 # **DeepSearch AI — AI-Powered Document Intelligence**
 
 DeepSearch AI is a full-stack platform that lets users upload documents, search them using natural language, and get accurate insights powered by **Google Gemini’s File Search API**.
@@ -63,23 +52,6 @@ Gemini File Search returns **precise, contextual answers**.
 
 ---
 
-# 🏗️ **Architecture Overview**
-
-```
-Next.js Frontend (Landing + Auth + Dashboard)
-│
-├── Supabase Auth (Email/Password)
-│       Secure user sign-in/up + session mgmt
-│
-└── FastAPI Backend
-        ├── File Upload → Gemini File Storage
-        ├── Store creation & document DB metadata
-        ├── Query endpoint using Gemini File Search (tool-calling)
-        └── User-based access control
-```
-
----
-
 # 📁 **Repository Structure**
 
 ```
@@ -87,19 +59,11 @@ README.md
 requirements.txt
 app/
     main.py                # FastAPI entrypoint
-    deps.py                # Dependency wiring
-    auth.py                # Supabase auth validation
+    deps.py                # Superbase
     gemini_client.py       # Gemini file search + model wrapper
-    storage.py             # File upload to Gemini
-    routes/
-        stores.py          # Create/delete stores
-        upload.py          # File upload per store
-        query.py           # Search inside store using Gemini
-frontend/
-    landing/               # Landing page UI
-    auth/                  # Login + signup
-    dashboard/             # Stores, file list, search UI
-    components/            # Shared UI components
+
+static/
+    index.html             # UI
 ```
 
 ---
@@ -161,18 +125,13 @@ http://localhost:8000
 
 ---
 
-# 🎨 **Frontend Setup (Next.js)**
+# 🎨 **Frontend 
 
-```bash
-cd frontend
-npm install
-npm run dev
-```
 
 Frontend available at:
 
 ```
-http://localhost:3000
+http://localhost:8000
 ```
 
 ---
