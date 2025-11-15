@@ -1,6 +1,4 @@
-docx2txt
 fastapi 
-openpyxl
 python-dotenv
 uvicorn[standard]
 jinja2
