@@ -4,6 +4,8 @@ DeepSearch AI is a full-stack platform that lets users upload documents, search 
 The system includes **authentication, secure file storage, multi-store organization, and a clean modern UI**, making it ideal for research, knowledge management, and internal document search.
 
 ---
+<img width="1452" height="604" alt="image" src="https://github.com/user-attachments/assets/6b91fd5a-5f01-4c7b-b843-3d64551def89" />
+
 
 ## 🚀 **Features**
 
