@@ -1,0 +1,10 @@
+docx2txt
+fastapi 
+openpyxl
+python-dotenv
+uvicorn[standard]
+jinja2
+python-multipart
+aiofiles
+google-genai==1.50.1
+pyjwt>=2.8.0
