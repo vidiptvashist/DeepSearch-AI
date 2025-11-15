@@ -28,9 +28,6 @@ static/
 - A virtual environment (recommended) and the required Python packages listed in `requirements.txt`.
 - An API key / credentials for the back-end model provider. The project includes a `gemini_client.py` file which expects credentials to be provided via environment variables (see assumptions below).
 
-Assumptions
-
-- I inferred the project uses an environment variable named `GEMINI_API_KEY` or similar to authenticate to the Gemini model API. If the client expects a different variable or a config file, update your environment or `app/gemini_client.py` accordingly.
 
 ## Install
 
@@ -50,10 +47,14 @@ pip install -r requirements.txt
 3. Set your API key (example):
 
 ```bash
-export GEMINI_API_KEY="your_api_key_here"
-```
+GEMINI_API_KEY = 
+SUPABASE_URL = 
+SUPABASE_SERVICE_ROLE_KEY =  
+SUPABASE_ANON_KEY = 
+SUPABASE_JWT_SECRET = 
 
-Adjust the variable name above if `app/gemini_client.py` expects a different environment variable.
+
+```
 
 ## Run the app
 
@@ -93,19 +94,7 @@ Contributions are welcome. Typical workflow:
 3. Add or update tests for new behavior.
 4. Open a pull request describing your changes.
 
-## License
-
-See `LICENSE` in the repository root for licensing information.
 
 ## Contact
 
 If you have questions, open an issue in this repository describing the problem or feature request.
-
----
-
-If you'd like, I can also:
-
-- Inspect `app/gemini_client.py` and `app/main.py` and add exact environment variables and example requests to this README.
-- Add a tiny run script or a simple test harness and a basic `Makefile` or `Procfile`.
-
-Tell me which you'd prefer and I'll implement it next.
