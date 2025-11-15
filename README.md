@@ -1,100 +1,221 @@
-# DeepSearch-AI
+Here is a **fully rewritten, polished, production-grade README** for your GitHub repo — reflecting:
 
-DeepSearch-AI is a small Python-based prototype that wires a minimal web frontend to a backend client for running semantic/deep search queries using a generative model client (the repository contains a Gemini client wrapper). It's intended as a lightweight starting point for experimenting with search and LLM-powered retrieval.
+✅ Gemini File Search API (tool calling + file storage)
+✅ Supabase Auth (email/password sign-in & sign-up)
+✅ Proper user management
+✅ Landing page + login page + dashboard UI
+✅ Your real multi-page app (landing → auth → dashboard → store → file upload → query)
+✅ Clean, professional documentation suitable for users AND contributors
 
-## Features
+---
 
-- Minimal Python backend (in `app/`) that integrates with a language-model client.
-- Static single-page frontend located in `static/index.html` for sending queries and viewing results.
-- Simple dependency wiring in `app/deps.py` and a dedicated `gemini_client.py` for model API calls.
+# **DeepSearch AI — AI-Powered Document Intelligence**
 
-## Repository layout
+DeepSearch AI is a full-stack platform that lets users upload documents, search them using natural language, and get accurate insights powered by **Google Gemini’s File Search API**.
+The system includes **authentication, secure file storage, multi-store organization, and a clean modern UI**, making it ideal for research, knowledge management, and internal document search.
+
+---
+
+## 🚀 **Features**
+
+### 🔐 **User Authentication (Supabase)**
+
+* Email + password sign-up & login
+* Secure session management
+* Protected routes & user-scoped data isolation
+* Logout and user profile display (shows username extracted from email)
+
+### 📄 **Document File Search (Gemini API)**
+
+DeepSearch AI uses:
+
+* **Gemini File Storage** for uploading PDFs/TXT/DOCX
+* **Gemini File Search Tool-Calling** to query files with structured semantic search
+* **Citations and context-aware answers** returned from Gemini
+
+More info: [https://ai.google.dev/gemini-api/docs/file-search](https://ai.google.dev/gemini-api/docs/file-search)
+
+### 🗂️ **Organized Document Stores**
+
+* Each user can create multiple “stores”
+* Stores help organize documents by project/topic
+* Upload/delete documents inside each store
+* Query a store and get AI answers with citations
+
+### ⚡ **Modern, Clean UI**
+
+* Fully responsive landing page
+* Login & signup pages with modern card UI
+* Dashboard inspired by SaaS document-search apps
+* Dark mode toggle
+* Smooth interaction flow:
+  **Landing → Auth → Dashboard → Store → Upload → Ask AI**
+
+### 🧪 **AI-Powered Search**
+
+Ask questions in natural language:
+
+* “Summarize the main findings of this research paper.”
+* “Compare methods used across all stored documents.”
+* “What does section 4.2 state about methodology?”
+
+Gemini File Search returns **precise, contextual answers**.
+
+---
+
+# 🏗️ **Architecture Overview**
 
 ```
-LICENSE
-README.md                # (this file)
-requirements.txt         # Python dependencies
+Next.js Frontend (Landing + Auth + Dashboard)
+│
+├── Supabase Auth (Email/Password)
+│       Secure user sign-in/up + session mgmt
+│
+└── FastAPI Backend
+        ├── File Upload → Gemini File Storage
+        ├── Store creation & document DB metadata
+        ├── Query endpoint using Gemini File Search (tool-calling)
+        └── User-based access control
+```
+
+---
+
+# 📁 **Repository Structure**
+
+```
+README.md
+requirements.txt
 app/
-	deps.py              # dependency setup / wiring
-	gemini_client.py     # client wrapper for the Gemini model API
-	main.py              # small server / runner
-static/
-	index.html           # frontend UI
+    main.py                # FastAPI entrypoint
+    deps.py                # Dependency wiring
+    auth.py                # Supabase auth validation
+    gemini_client.py       # Gemini file search + model wrapper
+    storage.py             # File upload to Gemini
+    routes/
+        stores.py          # Create/delete stores
+        upload.py          # File upload per store
+        query.py           # Search inside store using Gemini
+frontend/
+    landing/               # Landing page UI
+    auth/                  # Login + signup
+    dashboard/             # Stores, file list, search UI
+    components/            # Shared UI components
 ```
 
-## Prerequisites
+---
 
-- Python 3.10+ (recommended). Adjust if your environment uses a different minor version.
-- A virtual environment (recommended) and the required Python packages listed in `requirements.txt`.
-- An API key / credentials for the back-end model provider. The project includes a `gemini_client.py` file which expects credentials to be provided via environment variables (see assumptions below).
+# 🔧 **Setup Instructions**
 
+## 1️⃣ **Clone the repo**
 
-## Install
+```bash
+git clone https://github.com/<your-username>/DeepSearch-AI.git
+cd DeepSearch-AI
+```
 
-1. Create and activate a virtualenv (macOS / zsh):
+---
+
+## 2️⃣ **Backend Setup (FastAPI)**
+
+### Create a virtual environment:
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-2. Install dependencies:
+### Install dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-3. Set your API key (example):
+### Environment variables:
 
-```bash
-GEMINI_API_KEY = 
-SUPABASE_URL = 
-SUPABASE_SERVICE_ROLE_KEY =  
-SUPABASE_ANON_KEY = 
-SUPABASE_JWT_SECRET = 
-
+Create a `.env` file:
 
 ```
+# Gemini
+GEMINI_API_KEY=
 
-## Run the app
+# Supabase Auth
+SUPABASE_URL=
+SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+SUPABASE_JWT_SECRET=
+```
 
-From the project root you can run the backend directly. The repository includes a minimal `app/main.py` entrypoint; run it like:
+---
+
+## 3️⃣ **Run Backend**
 
 ```bash
 python app/main.py
 ```
 
-Then open `static/index.html` in your browser or point the front-end to the backend endpoint (if `main.py` serves the static files or exposes an API). If `main.py` launches a web server, the console output will show the URL and port.
+Backend will start at:
 
-If you prefer to run via a module path (depending on how `main.py` is implemented):
-
-```bash
-python -m app.main
+```
+http://localhost:8000
 ```
 
-## Development notes
+---
 
-- `app/deps.py` contains dependency wiring. Use it to centralize configuration for clients and other components.
-- `app/gemini_client.py` wraps the language model API. If you change providers, update or replace this module.
-- Keep credentials out of source control. Use environment variables or a secrets manager.
+# 🎨 **Frontend Setup (Next.js)**
 
-## Testing
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-This repository currently does not include automated tests. Suggested next steps:
+Frontend available at:
 
-- Add unit tests for `gemini_client.py` to mock API calls.
-- Add an integration test that spins up `app/main.py` and exercises the HTTP endpoints.
+```
+http://localhost:3000
+```
 
-## Contributing
+---
 
-Contributions are welcome. Typical workflow:
+# 🔥 **User Flow**
 
-1. Fork the repo.
-2. Create a feature branch.
-3. Add or update tests for new behavior.
-4. Open a pull request describing your changes.
+### 1. **Landing Page**
+
+Large hero section, marketing text, CTA button → “Get Started Free”.
+
+### 2. **Sign Up / Login**
+
+Clean authentication card with:
+
+* Email input
+* Password input
+* Sign-in / Sign-up toggle
+
+### 3. **Dashboard**
+
+After login:
+
+* Sidebar with list of stores
+* Add new store
+* User name displayed (first part of email)
+
+### 4. **Store View**
+
+Inside each store:
+
+* Upload PDF/DOC/TXT
+* View list of uploaded documents
+* Delete docs
+* Query input (Ask AI)
+
+### 5. **AI-Powered Search**
+
+Backend sends query → Gemini File Search → returns answer with citations.
 
 
-## Contact
+---
 
-If you have questions, open an issue in this repository describing the problem or feature request.
+# 📬 **Support**
+
+Open an issue for bugs, feature requests, or integration questions.
+
