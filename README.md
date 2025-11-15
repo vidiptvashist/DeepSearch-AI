@@ -3,10 +3,7 @@
 DeepSearch AI is a full-stack platform that lets users upload documents, search them using natural language, and get accurate insights powered by **Google Gemini’s File Search API**.
 The system includes **authentication, secure file storage, multi-store organization, and a clean modern UI**, making it ideal for research, knowledge management, and internal document search.
 
-<img width="1452" height="604" alt="image" src="https://github.com/user-attachments/assets/6b91fd5a-5f01-4c7b-b843-3d64551def89" />
-<img width="2548" height="1176" alt="image" src="https://github.com/user-attachments/assets/6c2eb900-27b0-4c94-8d1b-317642a4855d" />
-<img width="1459" height="535" alt="Screenshot 2025-11-16 at 12 06 01 AM" src="https://github.com/user-attachments/assets/85fab427-b1b7-42ac-9a07-b7f476091f43" />
-<img width="1459" height="728" alt="Screenshot 2025-11-16 at 12 06 45 AM" src="https://github.com/user-attachments/assets/815b400f-a167-4e6f-906c-ad226d9f4c99" />
+<img width="1920" height="958" alt="image" src="https://github.com/user-attachments/assets/1bd7601b-0837-436d-91e1-4af37d3b4caf" />
 
 
 ## 🚀 **Features**
