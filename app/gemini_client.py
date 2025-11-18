@@ -6,6 +6,7 @@ import logging
 import re
 from google.genai.errors import APIError
 import dotenv
+import json
 
 dotenv.load_dotenv()
 logging.basicConfig(level=logging.INFO)
@@ -13,9 +14,8 @@ logger = logging.getLogger(__name__)
 
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
-# --- helper: user-scoped store name ---
+# --- Helpers ---
 def _sanitize_display_name(display_name: str) -> str:
-    # replace spaces and unsafe chars
     return re.sub(r"[^\w\-\.]", "_", display_name)
 
 def _user_display_prefix(user_id: str) -> str:
@@ -26,180 +26,72 @@ def _user_store_display(user_id: str, display_name: str) -> str:
     return f"{_user_display_prefix(user_id)}{safe}"
 
 def _find_store_resource_by_display_prefix(prefix: str) -> str | None:
-    """
-    Return the full resource name (e.g. fileSearchStores/...) whose display_name
-    starts with the given prefix. Returns None if not found.
-    """
     try:
         stores = client.file_search_stores.list()
-    except Exception as e:
-        logger.error("Failed listing file_search_stores: %s", e)
-        raise
-
-    for s in stores:
-        dn = getattr(s, "display_name", None)
-        # Some API objects may not expose display_name; guard defensively
-        if dn and dn.startswith(prefix):
-            return s.name
-    return None
-
-
-def create_file_search_store_for_user(user_id: str, display_name: str):
-    """
-    Create a new File Search Store with user-scoped display_name prefix.
-    Returns a dict: {"resource_name": <full resource>, "display_name": <the display_name>}
-    """
-    # Build a user-scoped display_name so we can filter later.
-    user_display = _user_store_display(user_id, display_name)
-    try:
-        store = client.file_search_stores.create(config={"display_name": user_display})
-        logger.info("SUCCESS: Store created. resource_name=%s display_name=%s", store.name, store.display_name)
-        return {"resource_name": store.name, "display_name": store.display_name}
-    except APIError as e:
-        logger.error("ERROR: Could not create File Search Store. Details: %s", e)
-        raise
-
-
-def delete_store_for_user(user_id: str, display_name: str):
-    # Check if display_name already has the prefix (from frontend)
-    prefix = _user_display_prefix(user_id)
-    if display_name.startswith(prefix):
-        search_prefix = display_name
-    else:
-        search_prefix = _user_store_display(user_id, display_name)
-    
-    store_resource = _find_store_resource_by_display_prefix(search_prefix)
-    if not store_resource:
-        raise ValueError(f"No store found matching display prefix: {prefix}")
-    try:
-        client.file_search_stores.delete(name=store_resource, config={"force": True})
-        logger.info("SUCCESS: File Search Store %s deleted.", store_resource)
-    except Exception as e:
-        logger.error("ERROR: Could not delete store: %s", e)
-        raise
-
-
-def upload_file_to_store_for_user(user_id: str, display_name: str, file_path: str, original_name: str) -> dict:
-    """
-    Uploads file at file_path to the user's store. Returns {"ok": True, "store_resource": ..., "uploaded": True}
-    """
-    # Check if display_name already has the prefix (from frontend)
-    prefix = _user_display_prefix(user_id)
-    logger.info(f"Upload: user_id={user_id}, display_name={display_name}, prefix={prefix}")
-    
-    if display_name.startswith(prefix):
-        search_prefix = display_name
-        logger.info(f"Display name already has prefix, using: {search_prefix}")
-    else:
-        search_prefix = _user_store_display(user_id, display_name)
-        logger.info(f"Adding prefix, using: {search_prefix}")
-    
-    store_resource = _find_store_resource_by_display_prefix(search_prefix)
-    if not store_resource:
-        raise ValueError(f"No store found matching display prefix: {search_prefix}")
-
-    try:
-        client.file_search_stores.upload_to_file_search_store(
-            file=file_path,
-            file_search_store_name=store_resource,
-            config={
-                "chunking_config": {
-                    "white_space_config": {
-                        "max_tokens_per_chunk": 512,
-                        "max_overlap_tokens": 51,
-                    }
-                },
-                'display_name': f'{original_name}',
-            },
-        )
-        logger.info("SUCCESS: File %s uploaded to store %s.", file_path, store_resource)
-        return {"ok": True, "store_resource": store_resource, "uploaded": True}
-    except Exception as e:
-        logger.error("ERROR: Could not upload file to store. Details: %s", e)
-        raise
-
-
-def list_file_search_stores_for_user(user_id: str) -> list:
-    """
-    Return list of dicts: [{"resource_name": s.name, "display_name": s.display_name}, ...]
-    Only returns stores whose display_name starts with the user prefix.
-    """
-    try:
-        prefix = _user_display_prefix(user_id)
-        stores = client.file_search_stores.list()
-        user_stores = []
         for s in stores:
             dn = getattr(s, "display_name", None)
             if dn and dn.startswith(prefix):
-                user_stores.append({"resource_name": s.name, "display_name": dn})
-        return user_stores
-    except Exception as e:
-        logger.error("ERROR: Could not list stores: %s", e)
+                return s.name
+    except Exception:
+        pass
+    return None
+
+# --- Store Management ---
+def create_file_search_store_for_user(user_id: str, display_name: str):
+    user_display = _user_store_display(user_id, display_name)
+    try:
+        store = client.file_search_stores.create(config={"display_name": user_display})
+        return {"resource_name": store.name, "display_name": store.display_name}
+    except APIError as e:
+        logger.error("Create Store Failed: %s", e)
         raise
 
+def delete_store_for_user(user_id: str, display_name: str):
+    prefix = _user_display_prefix(user_id)
+    search_prefix = display_name if display_name.startswith(prefix) else _user_store_display(user_id, display_name)
+    store_resource = _find_store_resource_by_display_prefix(search_prefix)
+    if store_resource:
+        client.file_search_stores.delete(name=store_resource, config={"force": True})
+
+def list_file_search_stores_for_user(user_id: str) -> list:
+    prefix = _user_display_prefix(user_id)
+    try:
+        stores = client.file_search_stores.list()
+        return [{"resource_name": s.name, "display_name": s.display_name} for s in stores if getattr(s, "display_name", "").startswith(prefix)]
+    except Exception:
+        return []
+
+# --- Document Management ---
+def upload_file_to_store_for_user(user_id: str, display_name: str, file_path: str, original_name: str):
+    prefix = _user_display_prefix(user_id)
+    search_prefix = display_name if display_name.startswith(prefix) else _user_store_display(user_id, display_name)
+    store_resource = _find_store_resource_by_display_prefix(search_prefix)
+    if not store_resource: raise ValueError("Store not found")
+
+    client.file_search_stores.upload_to_file_search_store(
+        file=file_path,
+        file_search_store_name=store_resource,
+        config={"chunking_config": {"white_space_config": {"max_tokens_per_chunk": 512, "max_overlap_tokens": 51}}, 'display_name': original_name},
+    )
+    return {"ok": True}
 
 def list_documents_in_store_for_user(user_id: str, display_name: str) -> list:
-    """
-    Returns list of docs in format expected by frontend:
-    [{"resource_name": <doc_resource_name>, "display_name": <file name>, "mime_type": <type>}...]
-    """
-    # Check if display_name already has the prefix (from frontend)
     prefix = _user_display_prefix(user_id)
-    if display_name.startswith(prefix):
-        # Already has prefix, use as-is
-        search_prefix = display_name
-    else:
-        # Add prefix
-        search_prefix = _user_store_display(user_id, display_name)
-    
+    search_prefix = display_name if display_name.startswith(prefix) else _user_store_display(user_id, display_name)
     store_resource = _find_store_resource_by_display_prefix(search_prefix)
-    if not store_resource:
-        # Store doesn't exist yet or hasn't been found - return empty list instead of error
-        logger.warning(f"No store found matching display prefix: {prefix}. Returning empty list.")
-        return []
+    if not store_resource: return []
 
     try:
         documents = client.file_search_stores.documents.list(parent=store_resource)
-        out = []
-        for d in documents:
-            # Map to frontend expected format
-            out.append({
-                "resource_name": getattr(d, "name", None),  # Changed from "name" to "resource_name"
-                "display_name": getattr(d, "display_name", "Untitled"),
-                "mime_type": getattr(d, "mime_type", "application/octet-stream")  # Added mime_type
-            })
-        return out
-    except Exception as e:
-        logger.error("ERROR: Could not list documents: %s", e)
-        # Return empty list on error instead of raising
+        return [{"resource_name": getattr(d, "name", None), "display_name": getattr(d, "display_name", "Untitled"), "mime_type": getattr(d, "mime_type", "application/octet-stream")} for d in documents]
+    except Exception:
         return []
 
-
 def delete_document_from_store_for_user(user_id: str, display_name: str, document_resource_name: str):
-    """
-    document_resource_name must be the full resource name returned in list_documents_in_store_for_user.
-    """
-    # Check if display_name already has the prefix (from frontend)
-    prefix = _user_display_prefix(user_id)
-    if display_name.startswith(prefix):
-        search_prefix = display_name
-    else:
-        search_prefix = _user_store_display(user_id, display_name)
-    
-    store_resource = _find_store_resource_by_display_prefix(search_prefix)
-    if not store_resource:
-        raise ValueError(f"No store found matching display prefix: {prefix}")
+    client.file_search_stores.documents.delete(name=document_resource_name, config={"force": True})
+    return {"ok": True}
 
-    if not document_resource_name:
-        raise ValueError("Missing document resource name to delete.")
-
-    try:
-        client.file_search_stores.documents.delete(name=document_resource_name, config={"force": True})
-        logger.info("SUCCESS: Document %s deleted from store %s.", document_resource_name, store_resource)
-        return {"ok": True}
-    except Exception as e:
-        logger.error("ERROR: Could not delete document: %s", e)
-        raise
+# --- Chat Logic ---
 
 
 system_prompt = """
@@ -356,75 +248,125 @@ If you encounter information outside your knowledge base or require clarificatio
 
 **Remember**: Your users are experts seeking your analytical capabilities to see what they might have missed. Add value through rigorous technical analysis, creative connections, and actionable insights—not through basic explanations.
 
+
+# Output Format
+1. Answer the question directly.
+2. Do NOT manually add a "Sources" section in the text. Use the tool to cite.
+3. At the very end, provide 3 follow-up questions in this block:
+<<<SUGGESTIONS>>>
+1. Question 1
+2. Question 2
+3. Question 3
 """
 
-def query_in_store_for_user(user_id: str, display_name: str, query: str) -> str:
-    """
-    Query documents in the store and return the response text with citations.
-    Returns a formatted string with the answer and citations.
-    """
-    # Check if display_name already has the prefix (from frontend)
+
+def query_in_store_for_user(user_id: str, display_name: str, query: str, history: list = None, custom_system_instruction: str = None) -> dict:
     prefix = _user_display_prefix(user_id)
-    if display_name.startswith(prefix):
-        search_prefix = display_name
-    else:
-        search_prefix = _user_store_display(user_id, display_name)
-    
+    search_prefix = display_name if display_name.startswith(prefix) else _user_store_display(user_id, display_name)
     store_resource = _find_store_resource_by_display_prefix(search_prefix)
-    if not store_resource:
-        raise ValueError(f"No store found matching display prefix: {search_prefix}")
+    if not store_resource: raise ValueError("Store not found")
 
-    try:
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            
-            contents=query,
-            config=types.GenerateContentConfig(
-                system_instruction=system_prompt,
-                tools=[
-                    types.Tool(
-                        file_search=types.FileSearch(
-                            file_search_store_names=[store_resource]
-                        )
-                    )
-                ]
-            )
-        )
-
-
-    except Exception as e:
-        logger.error("ERROR: model generate_content failed: %s", e)
-        raise
-
-    # Extract the main response text
-    response_text = getattr(response, "text", "") or ""
+    contents = []
+    if history:
+        for msg in history[-6:]:
+            role = 'model' if msg.get("role") == 'assistant' else msg.get("role")
+            if role in ['user', 'model']:
+                contents.append(types.Content(role=role, parts=[types.Part.from_text(text=msg.get("content", ""))]))
     
-    # Extract citations
+    contents.append(types.Content(role="user", parts=[types.Part.from_text(text=query)]))
+
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=contents,
+        config=types.GenerateContentConfig(
+            system_instruction=custom_system_instruction if custom_system_instruction else system_prompt,
+            temperature=0.3,
+            tools=[types.Tool(file_search=types.FileSearch(file_search_store_names=[store_resource]))]
+        )
+    )
+
+    # 1. Extract Text & Suggestions
+    full_text = getattr(response, "text", "") or ""
+    suggestions = []
+    if '<<<SUGGESTIONS>>>' in full_text:
+        parts = full_text.split('<<<SUGGESTIONS>>>')
+        full_text = parts[0].strip()
+        suggestions = re.findall(r'\d+\.\s+(.*)', parts[1])
+
+    # 2. Extract Citations
     citations = []
     try:
         for cand in getattr(response, "candidates", []) or []:
-            gm = getattr(cand, "grounding_metadata", None)
-            if not gm:
-                continue
-            for chunk in getattr(gm, "grounding_chunks", []) or []:
-                title = getattr(chunk.retrieved_context, "title", None)
-                text = getattr(chunk.retrieved_context, "text", "") or ""
-                match = re.search(r"PAGE\s+(\d+)", text, flags=re.IGNORECASE)
-                page = match.group(1) if match else None
+            for chunk in getattr(cand.grounding_metadata, "grounding_chunks", []) or []:
+                title = getattr(chunk.retrieved_context, "title", "Unknown Source")
+                uri = getattr(chunk.retrieved_context, "uri", "")
+                text_preview = getattr(chunk.retrieved_context, "text", "")[:100] + "..."
                 
-                citation_text = f"📄 {title}"
-                if page:
-                    citation_text += f" (Page {page}\n)"
-                
-                if citation_text not in citations:
-                    citations.append(citation_text)
+                # Dedup based on title
+                if not any(c['title'] == title for c in citations):
+                    citations.append({"title": title, "uri": uri, "preview": text_preview})
+    except Exception:
+        pass
+
+    return {
+        "text": full_text,
+        "citations": citations,
+        "suggestions": suggestions
+    }
+
+def enhance_system_prompt(prompt: str) -> str:
+    enhancement_prompt = f"""
+    You are an expert prompt engineer. Refine the following system prompt to be more effective, clear, and robust for an AI assistant.
+    Keep the intent but improve the instructions.
+    
+    Original Prompt:
+    {prompt}
+    
+    Refined Prompt:
+    """
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.0-flash-exp",
+            contents=enhancement_prompt
+        )
+        return getattr(response, "text", "").strip()
     except Exception as e:
-        logger.exception("Failed parsing grounding metadata: %s", e)
+        logger.error("Enhance Prompt Failed: %s", e)
+        return prompt
 
-    # Format the response with citations
-    if citations:
-        formatted_response = f"{response_text}\n\n\n\n**Sources:**\n" + "\n".join(citations)
-    else:
-        formatted_response = response_text
-
-    return formatted_response
+def generate_knowledge_graph(user_id: str, display_name: str) -> dict:
+    docs = list_documents_in_store_for_user(user_id, display_name)
+    if not docs: return {"nodes": [], "links": []}
+    
+    doc_list = "\n".join([f"- {d['display_name']}" for d in docs[:20]]) # Limit to 20 docs for summary analysis
+    
+    prompt = f"""
+    Analyze the following list of documents in a knowledge base:
+    {doc_list}
+    
+    Your goal is to create a dense and interconnected Knowledge Graph.
+    
+    Return a JSON object with two keys:
+    1. "nodes": A list of objects {{ "id": "Short Label", "group": 1, "val": 10 }}. 
+       - Group 1: Document Names (val: 20)
+       - Group 2: Key Topics/Concepts (val: 10)
+       - Group 3: Entities (People, Orgs, Locations) (val: 5)
+    2. "links": A list of objects {{ "source": "id_of_source", "target": "id_of_target" }}.
+       - Create MANY links. Connect documents to their topics.
+       - Connect related topics to each other.
+       - Connect documents that share similar topics.
+       
+    Keep labels short (max 3 words). Max 30 nodes. Max 50 links.
+    Output purely JSON.
+    """
+    
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.0-flash-exp",
+            contents=prompt,
+            config=types.GenerateContentConfig(response_mime_type="application/json")
+        )
+        return json.loads(getattr(response, "text", "{}"))
+    except Exception as e:
+        logger.error("Graph Gen Failed: %s", e)
+        return {"nodes": [], "links": []}

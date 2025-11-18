@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,786 +10,829 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="//unpkg.com/react-force-graph-2d"></script>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        brand: { 50: '#eef2ff', 100: '#e0e7ff', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca', 900: '#312e81' },
+                        dark: { bg: '#09090b', surface: '#18181b', border: '#27272a' }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.4s ease-out',
+                        'slide-up': 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+                    },
+                    keyframes: {
+                        fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+                        slideUp: { '0%': { transform: 'translateY(20px)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } }
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
-        .markdown-content h1 { font-size: 1.5em; font-weight: bold; margin: 1em 0 0.5em 0; }
-        .markdown-content h2 { font-size: 1.3em; font-weight: bold; margin: 1em 0 0.5em 0; }
-        .markdown-content h3 { font-size: 1.1em; font-weight: bold; margin: 0.8em 0 0.4em 0; }
-        .markdown-content p { margin: 0.8em 0; line-height: 1.6; }
-        .markdown-content ul, .markdown-content ol { margin: 0.8em 0; padding-left: 2em; }
-        .markdown-content li { margin: 0.4em 0; }
-        .markdown-content strong { font-weight: 600; }
-        .dark .markdown-content strong { color: #e5e7eb; }
-        .markdown-content strong { color: #1f2937; }
-        .markdown-content em { font-style: italic; }
-        .markdown-content code { padding: 0.2em 0.4em; border-radius: 0.25em; font-family: monospace; font-size: 0.9em; }
-        .dark .markdown-content code { background: #374151; }
-        .markdown-content code { background: #f3f4f6; }
-        .markdown-content pre { padding: 1em; border-radius: 0.5em; overflow-x: auto; margin: 1em 0; }
-        .dark .markdown-content pre { background: #374151; }
-        .markdown-content pre { background: #f3f4f6; }
-        .markdown-content pre code { background: none; padding: 0; }
-        .markdown-content a { color: #4f46e5; text-decoration: underline; }
-        .markdown-content blockquote { border-left: 4px solid #e5e7eb; padding-left: 1em; margin: 1em 0; color: #6b7280; }
-        .markdown-content table { border-collapse: collapse; width: 100%; margin: 1em 0; }
-        .markdown-content th, .markdown-content td { border: 1px solid #e5e7eb; padding: 0.5em; text-align: left; }
-        .markdown-content th { background: #f9fafb; font-weight: 600; }
-        .dark .markdown-content th { background: #374151; }
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #e4e4e7;
+            border-radius: 3px;
+        }
+
+        .dark ::-webkit-scrollbar-thumb {
+            background: #3f3f46;
+        }
+
+        .markdown-content p {
+            margin-bottom: 0.6em;
+            line-height: 1.6;
+        }
+
+        .markdown-content p:last-child {
+            margin-bottom: 0;
+        }
+
+        .markdown-content ul {
+            list-style-type: disc;
+            padding-left: 1.5em;
+            margin-bottom: 0.6em;
+        }
+
+        .markdown-content ol {
+            list-style-type: decimal;
+            padding-left: 1.5em;
+            margin-bottom: 0.6em;
+        }
+
+        .markdown-content strong {
+            font-weight: 600;
+            color: inherit;
+        }
+
+        .markdown-content code {
+            background: rgba(100, 116, 139, 0.1);
+            padding: 0.2em 0.4em;
+            border-radius: 0.3em;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+
+        .dark .markdown-content code {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .markdown-content pre {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            margin: 1em 0;
+        }
+
+        .loader {
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-top: 2px solid currentColor;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
     </style>
 </head>
-<body>
+
+<body class="bg-white dark:bg-dark-bg text-zinc-900 dark:text-zinc-100 transition-colors duration-200 overflow-hidden">
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        const { useState, useEffect, useRef, useLayoutEffect } = React;
+        const ForceGraph2D = window.ForceGraph2D;
 
+        // --- CONFIG ---
         const SUPABASE_URL = 'https://yeufqxpqibeuvcunzyeo.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlldWZxeHBxaWJldXZjdW56eWVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMxNTM1MDgsImV4cCI6MjA3ODcyOTUwOH0.8AUu8y9izVvCcHXNHDvJtVLXQPjr_aNqnVSsWTI2E90';
-        const API_BASE_URL = window.location.protocol === 'file:' 
-            ? 'http://localhost:8000'
-            : window.location.origin;
+        const API_BASE_URL = window.location.protocol === 'file:' ? 'http://localhost:8000' : window.location.origin;
 
-        const Icon = ({ children, className = "", onClick }) => (
-            <svg className={className} onClick={onClick} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                {children}
-            </svg>
-        );
+        // --- ICONS ---
+        const Icon = ({ children, className = "", onClick }) => <svg className={className} onClick={onClick} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{children}</svg>;
+        const SendIcon = (props) => <Icon {...props}><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></Icon>;
+        const PlusIcon = (props) => <Icon {...props}><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></Icon>;
+        const TrashIcon = (props) => <Icon {...props}><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /><line x1="10" y1="11" x2="10" y2="17" /><line x1="14" y1="11" x2="14" y2="17" /></Icon>;
+        const DatabaseIcon = (props) => <Icon {...props}><ellipse cx="12" cy="5" rx="9" ry="3" /><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" /><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" /></Icon>;
+        const SidebarIcon = (props) => <Icon {...props}><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><line x1="9" y1="3" x2="9" y2="21" /></Icon>;
+        const SunIcon = (props) => <Icon {...props}><circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" /><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" /><line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" /><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" /></Icon>;
+        const MoonIcon = (props) => <Icon {...props}><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" /></Icon>;
+        const UploadIcon = (props) => <Icon {...props}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></Icon>;
+        const FileIcon = (props) => <Icon {...props}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><line x1="10" y1="9" x2="8" y2="9" /></Icon>;
+        const RefreshIcon = (props) => <Icon {...props}><polyline points="23 4 23 10 17 10" /><polyline points="1 20 1 14 7 14" /><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" /></Icon>;
+        const BookIcon = (props) => <Icon {...props}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" /></Icon>;
+        const ArrowLeftIcon = (props) => <Icon {...props}><line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" /></Icon>;
+        const SettingsIcon = (props) => <Icon {...props}><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" /></Icon>;
+        const SparklesIcon = (props) => <Icon {...props}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" /></Icon>;
+        const NetworkIcon = (props) => <Icon {...props}><circle cx="12" cy="12" r="3" /><circle cx="6" cy="6" r="3" /><circle cx="18" cy="6" r="3" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="18" r="3" /><line x1="12" y1="12" x2="6" y2="6" /><line x1="12" y1="12" x2="18" y2="6" /><line x1="12" y1="12" x2="6" y2="18" /><line x1="12" y1="12" x2="18" y2="18" /></Icon>;
 
-        const Upload = (props) => <Icon {...props}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></Icon>;
-        const Search = (props) => <Icon {...props}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></Icon>;
-        const Trash2 = (props) => <Icon {...props}><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></Icon>;
-        const Plus = (props) => <Icon {...props}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></Icon>;
-        const FileText = (props) => <Icon {...props}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></Icon>;
-        const Database = (props) => <Icon {...props}><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></Icon>;
-        const LogOut = (props) => <Icon {...props}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></Icon>;
-        const Menu = (props) => <Icon {...props}><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></Icon>;
-        const X = (props) => <Icon {...props}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></Icon>;
-        const Sun = (props) => <Icon {...props}><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></Icon>;
-        const Moon = (props) => <Icon {...props}><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></Icon>;
-
+        // --- SUPABASE ---
         class SupabaseClient {
-            constructor(url, key) {
-                this.url = url;
-                this.key = key;
-                this.token = localStorage.getItem('sb_token');
-                this.userEmail = localStorage.getItem('sb_email');
-            }
-
-            async signUp(email, password) {
-                const res = await fetch(`${this.url}/auth/v1/signup`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'apikey': this.key },
-                    body: JSON.stringify({ email, password })
-                });
-                const data = await res.json();
-                if (data.access_token) {
-                    this.token = data.access_token;
-                    this.userEmail = email;
-                    localStorage.setItem('sb_token', data.access_token);
-                    localStorage.setItem('sb_email', email);
-                }
-                return data;
-            }
-
-            async signIn(email, password) {
-                const res = await fetch(`${this.url}/auth/v1/token?grant_type=password`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'apikey': this.key },
-                    body: JSON.stringify({ email, password })
-                });
-                const data = await res.json();
-                if (data.access_token) {
-                    this.token = data.access_token;
-                    this.userEmail = email;
-                    localStorage.setItem('sb_token', data.access_token);
-                    localStorage.setItem('sb_email', email);
-                }
-                return data;
-            }
-
-            signOut() {
-                this.token = null;
-                this.userEmail = null;
-                localStorage.removeItem('sb_token');
-                localStorage.removeItem('sb_email');
-            }
-
-            getToken() {
-                return this.token;
-            }
-
-            getEmail() {
-                return this.userEmail;
-            }
+            constructor(url, key) { this.url = url; this.key = key; this.token = localStorage.getItem('sb_token'); this.userEmail = localStorage.getItem('sb_email'); }
+            async signIn(email, password) { const res = await fetch(`${this.url}/auth/v1/token?grant_type=password`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'apikey': this.key }, body: JSON.stringify({ email, password }) }); const data = await res.json(); if (data.access_token) { this.saveSession(data.access_token, email); } return data; }
+            async signUp(email, password) { const res = await fetch(`${this.url}/auth/v1/signup`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'apikey': this.key }, body: JSON.stringify({ email, password }) }); const data = await res.json(); if (data.access_token) { this.saveSession(data.access_token, email); } return data; }
+            saveSession(token, email) { this.token = token; this.userEmail = email; localStorage.setItem('sb_token', token); localStorage.removeItem('sb_email'); }
+            signOut() { this.token = null; this.userEmail = null; localStorage.removeItem('sb_token'); localStorage.removeItem('sb_email'); }
+            getToken() { return this.token; }
+            getEmail() { return this.userEmail; }
         }
-
         const supabase = new SupabaseClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+        // --- SUB COMPONENTS ---
+        const ThemeToggle = ({ darkMode, setDarkMode, className = "" }) => (
+            <button
+                onClick={() => setDarkMode(!darkMode)}
+                className={`p-2 rounded-lg transition text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/10 ${className}`}
+                title="Toggle Theme"
+            >
+                {darkMode ? <SunIcon /> : <MoonIcon />}
+            </button>
+        );
+
+        // --- MAIN APP ---
         function App() {
             const [darkMode, setDarkMode] = useState(() => {
                 const saved = localStorage.getItem('darkMode');
-                return saved ? JSON.parse(saved) : false;
+                return saved !== null ? JSON.parse(saved) : true;
             });
-            const [showLanding, setShowLanding] = useState(true);
+            const [view, setView] = useState('landing'); // 'landing' | 'auth' | 'app' | 'release_notes'
             const [user, setUser] = useState(null);
+
             const [authMode, setAuthMode] = useState('signin');
             const [email, setEmail] = useState('');
             const [password, setPassword] = useState('');
+            const [loading, setLoading] = useState(false);
+
             const [stores, setStores] = useState([]);
             const [selectedStore, setSelectedStore] = useState(null);
             const [documents, setDocuments] = useState([]);
+            const [messages, setMessages] = useState([]);
             const [query, setQuery] = useState('');
-            const [queryResult, setQueryResult] = useState('');
-            const [newStoreName, setNewStoreName] = useState('');
-            const [loading, setLoading] = useState(false);
-            const [sidebarOpen, setSidebarOpen] = useState(true);
+
+            const [chatLoading, setChatLoading] = useState(false);
             const [uploadProgress, setUploadProgress] = useState(false);
 
+            const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
+            const [rightSidebarOpen, setRightSidebarOpen] = useState(true);
+            const [newStoreName, setNewStoreName] = useState('');
+
+            const [showSettings, setShowSettings] = useState(false);
+            const [systemPrompt, setSystemPrompt] = useState('');
+            const [enhancing, setEnhancing] = useState(false);
+
+            const [viewMode, setViewMode] = useState('chat'); // 'chat' | 'graph'
+            const [graphData, setGraphData] = useState({ nodes: [], links: [] });
+            const [graphLoading, setGraphLoading] = useState(false);
+
+            const chatEndRef = useRef(null);
+
             useEffect(() => {
-                if (darkMode) {
-                    document.documentElement.classList.add('dark');
-                } else {
-                    document.documentElement.classList.remove('dark');
-                }
+                document.documentElement.classList.toggle('dark', darkMode);
                 localStorage.setItem('darkMode', JSON.stringify(darkMode));
             }, [darkMode]);
 
             useEffect(() => {
                 const token = supabase.getToken();
-                const userEmail = supabase.getEmail();
-                if (token && userEmail) {
-                    setUser({ token, email: userEmail });
-                    setShowLanding(false);
+                if (token) {
+                    setUser({ token, email: supabase.getEmail() });
+                    setView('app');
                     loadStores();
                 }
             }, []);
 
-            const toggleDarkMode = () => {
-                setDarkMode(!darkMode);
+            useLayoutEffect(() => {
+                chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+            }, [messages, loading, chatLoading]);
+
+            const apiCall = async (endpoint, options = {}) => {
+                const res = await fetch(`${API_BASE_URL}${endpoint}`, {
+                    ...options,
+                    headers: { ...options.headers, 'Authorization': `Bearer ${supabase.getToken()}` }
+                });
+                if (!res.ok) throw new Error(await res.text());
+                return res.json();
             };
 
+            // --- ACTIONS ---
+
             const handleAuth = async () => {
+                if (!email || !password) return alert('Please fill in all fields');
                 setLoading(true);
                 try {
-                    const data = authMode === 'signin' 
-                        ? await supabase.signIn(email, password)
-                        : await supabase.signUp(email, password);
-                    
+                    const data = authMode === 'signin' ? await supabase.signIn(email, password) : await supabase.signUp(email, password);
                     if (data.access_token) {
                         setUser({ token: data.access_token, email });
-                        setShowLanding(false);
+                        setView('app');
                         loadStores();
-                    } else {
-                        alert(data.error_description || 'Authentication failed');
-                    }
-                } catch (err) {
-                    alert('Error: ' + err.message);
-                }
+                    } else alert(data.error_description || 'Authentication failed');
+                } catch (e) { alert(e.message); }
                 setLoading(false);
             };
 
             const handleLogout = () => {
                 supabase.signOut();
                 setUser(null);
+                setView('landing');
                 setStores([]);
                 setSelectedStore(null);
-                setDocuments([]);
             };
 
-            const apiCall = async (endpoint, options = {}) => {
-                const token = supabase.getToken();
-                const res = await fetch(`${API_BASE_URL}${endpoint}`, {
-                    ...options,
-                    headers: {
-                        ...options.headers,
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                if (!res.ok) throw new Error('API call failed');
-                return res.json();
-            };
-
-            const loadStores = async () => {
-                try {
-                    const data = await apiCall('/api/stores');
-                    setStores(data.stores || []);
-                } catch (err) {
-                    console.error('Failed to load stores:', err);
-                }
-            };
-
-            const createStore = async () => {
-                if (!newStoreName.trim()) return;
-                setLoading(true);
-                try {
-                    await apiCall('/api/stores', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ display_name: newStoreName })
-                    });
-                    setNewStoreName('');
-                    loadStores();
-                } catch (err) {
-                    alert('Failed to create store');
-                }
-                setLoading(false);
-            };
-
-            const deleteStore = async (displayName) => {
-                if (!confirm(`Delete store "${displayName}"?`)) return;
-                try {
-                    await apiCall(`/api/stores/${encodeURIComponent(displayName)}`, {
-                        method: 'DELETE'
-                    });
-                    if (selectedStore?.display_name === displayName) {
-                        setSelectedStore(null);
-                        setDocuments([]);
-                    }
-                    loadStores();
-                } catch (err) {
-                    alert('Failed to delete store');
-                }
-            };
+            const loadStores = async () => { try { setStores((await apiCall('/api/stores')).stores || []); } catch (e) { console.error(e); } };
 
             const selectStore = async (store) => {
                 setSelectedStore(store);
-                setQueryResult('');
-                try {
-                    const data = await apiCall(`/api/stores/${encodeURIComponent(store.display_name)}/documents`);
-                    setDocuments(data.documents || []);
-                } catch (err) {
-                    console.error('Failed to load documents:', err);
-                }
+                setMessages([]);
+                setChatLoading(true);
+                setViewMode('chat');
+                setGraphData({ nodes: [], links: [] });
+
+                // Load system prompt for this store
+                const savedPrompt = localStorage.getItem(`sys_prompt_${store.display_name}`);
+                setSystemPrompt(savedPrompt || "");
+
+                Promise.all([
+                    apiCall(`/api/stores/${encodeURIComponent(store.display_name)}/documents`),
+                    apiCall(`/api/stores/${encodeURIComponent(store.display_name)}/chat`)
+                ]).then(([docsData, chatData]) => {
+                    setDocuments(docsData.documents || []);
+                    setMessages(chatData.history || []);
+                }).catch(e => console.error(e))
+                    .finally(() => setChatLoading(false));
+
+                if (window.innerWidth < 768) setLeftSidebarOpen(false);
             };
 
-            const uploadFile = async (e) => {
-                const file = e.target.files?.[0];
-                if (!file || !selectedStore) return;
-                
-                setUploadProgress(true);
-                const formData = new FormData();
-                formData.append('file', file);
-                
-                try {
-                    const token = supabase.getToken();
-                    await fetch(`${API_BASE_URL}/api/stores/${encodeURIComponent(selectedStore.display_name)}/upload`, {
-                        method: 'POST',
-                        headers: { 'Authorization': `Bearer ${token}` },
-                        body: formData
-                    });
-                    selectStore(selectedStore);
-                } catch (err) {
-                    alert('Upload failed');
-                }
-                setUploadProgress(false);
-                e.target.value = '';
-            };
-
-            const deleteDocument = async (docResourceName) => {
-                if (!confirm('Delete this document?')) return;
-                try {
-                    await apiCall(`/api/stores/${encodeURIComponent(selectedStore.display_name)}/documents`, {
-                        method: 'DELETE',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ document_resource_name: docResourceName })
-                    });
-                    selectStore(selectedStore);
-                } catch (err) {
-                    alert('Failed to delete document');
-                }
-            };
-
-            const handleQuery = async () => {
-                if (!query.trim() || !selectedStore) return;
-                
+            const handleQuery = async (txt = query) => {
+                if (!txt.trim() || !selectedStore) return;
+                const userMsg = { role: 'user', content: txt };
+                setMessages(prev => [...prev, userMsg]);
+                setQuery('');
                 setLoading(true);
+
                 try {
                     const data = await apiCall(`/api/stores/${encodeURIComponent(selectedStore.display_name)}/query`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ query })
+                        body: JSON.stringify({ query: txt, system_instruction: systemPrompt })
                     });
-                    setQueryResult(data.result || 'No results found');
-                } catch (err) {
-                    setQueryResult('Query failed: ' + err.message);
+                    setMessages(prev => [...prev, { role: 'model', content: data.result, suggestions: data.suggestions, citations: data.citations }]);
+                } catch (e) {
+                    setMessages(prev => [...prev, { role: 'model', content: 'Error: ' + e.message, isError: true }]);
                 }
                 setLoading(false);
             };
 
-            const handleKeyPress = (e, action) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    action();
+            // Store & Doc Actions
+            const createStore = async () => {
+                if (!newStoreName.trim()) return;
+                try { await apiCall('/api/stores', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ display_name: newStoreName }) }); setNewStoreName(''); loadStores(); } catch (e) { alert('Failed to create store'); }
+            };
+            const deleteStore = async (name) => { if (!confirm(`Delete ${name}?`)) return; try { await apiCall(`/api/stores/${encodeURIComponent(name)}`, { method: 'DELETE' }); loadStores(); if (selectedStore?.display_name === name) setSelectedStore(null); } catch (e) { alert('Delete failed'); } };
+            const uploadFile = async (e) => {
+                const file = e.target.files?.[0]; if (!file || !selectedStore) return;
+                setUploadProgress(true); const fd = new FormData(); fd.append('file', file);
+                try {
+                    await fetch(`${API_BASE_URL}/api/stores/${encodeURIComponent(selectedStore.display_name)}/upload`, { method: 'POST', headers: { 'Authorization': `Bearer ${supabase.getToken()}` }, body: fd });
+                    const docsData = await apiCall(`/api/stores/${encodeURIComponent(selectedStore.display_name)}/documents`); setDocuments(docsData.documents || []);
+                } catch (e) { alert('Upload failed'); } setUploadProgress(false); e.target.value = '';
+            };
+            const deleteDocument = async (docName) => { if (!confirm("Delete doc?")) return; try { await apiCall(`/api/stores/${encodeURIComponent(selectedStore.display_name)}/documents`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ document_resource_name: docName }) }); const docsData = await apiCall(`/api/stores/${encodeURIComponent(selectedStore.display_name)}/documents`); setDocuments(docsData.documents || []); } catch (e) { alert("Failed to delete doc"); } };
+
+            const handleEnhancePrompt = async () => {
+                if (!systemPrompt.trim()) return;
+                setEnhancing(true);
+                try {
+                    const res = await apiCall('/api/enhance_prompt', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: systemPrompt }) });
+                    setSystemPrompt(res.enhanced_prompt);
+                } catch (e) { alert("Enhancement failed"); }
+                setEnhancing(false);
+            };
+
+            const saveSettings = () => {
+                if (selectedStore) {
+                    localStorage.setItem(`sys_prompt_${selectedStore.display_name}`, systemPrompt);
+                }
+                setShowSettings(false);
+            };
+
+            const toggleViewMode = async () => {
+                const newMode = viewMode === 'chat' ? 'graph' : 'chat';
+                setViewMode(newMode);
+                if (newMode === 'graph' && graphData.nodes.length === 0) {
+                    setGraphLoading(true);
+                    try {
+                        const data = await apiCall(`/api/stores/${encodeURIComponent(selectedStore.display_name)}/graph`);
+                        setGraphData(data);
+                    } catch (e) { alert("Failed to load graph"); setViewMode('chat'); }
+                    setGraphLoading(false);
                 }
             };
 
-            if (!user) {
-                if (showLanding) {
-                    return (
-                        <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-white'} transition-colors`}>
-                            {/* Navigation */}
-                            <nav className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b sticky top-0 z-50`}>
-                                <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center">
-                                            <Database className="w-6 h-6 text-white" />
+
+            // --- RENDER VIEWS ---
+
+            if (view === 'landing') {
+                return (
+                    <div className="min-h-screen bg-white dark:bg-dark-bg text-zinc-900 dark:text-white transition-colors relative font-sans flex flex-col">
+                        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none"></div>
+                        <nav className="max-w-7xl mx-auto px-6 py-6 flex items-center justify-between relative z-10 w-full">
+                            <div className="flex items-center gap-2">
+                                <div className="w-9 h-9 bg-gradient-to-tr from-brand-600 to-brand-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-brand-500/20"><DatabaseIcon className="w-5 h-5" /></div>
+                                <span className="text-xl font-bold tracking-tight">DeepSearch</span>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <ThemeToggle darkMode={darkMode} setDarkMode={setDarkMode} />
+                                <button onClick={() => setView('auth')} className="px-5 py-2.5 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-medium rounded-lg hover:opacity-90 transition shadow-md">Sign In</button>
+                            </div>
+                        </nav>
+                        <main className="flex-1 flex flex-col items-center justify-center px-6 pb-20 text-center relative z-10">
+                            <div className="bg-brand-50 dark:bg-brand-900/20 text-brand-600 dark:text-brand-300 px-4 py-1.5 rounded-full text-xs font-semibold mb-8 border border-brand-100 dark:border-brand-800/50 animate-fade-in">
+                                v2.75 • Persistent Memory & Smart Citations
+                            </div>
+                            <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-8 text-zinc-900 dark:text-white max-w-4xl leading-tight">
+                                Transform your documents into <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-600 to-purple-600 dark:from-brand-400 dark:to-purple-400">intelligent insights</span>
+                            </h1>
+                            <p className="text-lg text-zinc-600 dark:text-zinc-400 mb-12 max-w-2xl mx-auto leading-relaxed">
+                                DeepSearch acts as your dedicated research assistant. Upload Documents, ask complex questions, and get answers backed by cited sources and conversation history.
+                            </p>
+                            <button onClick={() => setView('auth')} className="px-8 py-4 bg-brand-600 text-white rounded-xl font-semibold shadow-xl shadow-brand-600/20 hover:bg-brand-700 transition-all hover:-translate-y-1 flex items-center gap-2">
+                                Start Researching <SendIcon className="w-4 h-4" />
+                            </button>
+                        </main>
+                        <footer className="p-6 text-center relative z-10">
+                            <button onClick={() => setView('release_notes')} className="text-sm text-zinc-500 hover:text-brand-600 dark:text-zinc-400 dark:hover:text-brand-400 transition font-medium">
+                                What's New in v2.75?
+                            </button>
+                        </footer>
+                    </div>
+                );
+            }
+
+            if (view === 'release_notes') {
+                return (
+                    <div className="h-screen overflow-y-auto bg-zinc-50 dark:bg-dark-bg text-zinc-900 dark:text-white p-6 md:p-12 font-sans">
+                        <div className="max-w-3xl mx-auto">
+                            <div className="mb-12 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-gradient-to-tr from-brand-600 to-brand-500 rounded-xl flex items-center justify-center text-white shadow-lg"><DatabaseIcon className="w-5 h-5" /></div>
+                                    <h1 className="text-2xl font-bold">Release Notes</h1>
+                                </div>
+                                <button onClick={() => setView('landing')} className="px-4 py-2 bg-white dark:bg-white/5 border border-zinc-200 dark:border-dark-border rounded-lg text-sm font-medium hover:bg-zinc-50 dark:hover:bg-white/10 transition">Back to Home</button>
+                            </div>
+
+                            <div className="space-y-12 relative before:absolute before:inset-y-0 before:left-4 md:before:left-[8.5rem] before:w-0.5 before:bg-zinc-200 dark:before:bg-zinc-800">
+
+                                {/* v2.75 */}
+                                <div className="relative flex flex-col md:flex-row gap-8 animate-slide-up">
+                                    <div className="md:w-32 shrink-0 flex md:flex-col items-center md:items-end gap-2 md:text-right">
+                                        <span className="px-2 py-1 bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 text-[10px] font-bold rounded uppercase tracking-wide">Beta</span>
+                                        <span className="font-mono text-lg font-bold text-zinc-400">v2.75</span>
+                                    </div>
+                                    <div className="absolute left-4 md:left-[8.5rem] -translate-x-1/2 w-4 h-4 rounded-full bg-brand-500 border-4 border-zinc-50 dark:border-dark-bg"></div>
+                                    <div className="flex-1 bg-white dark:bg-dark-surface border border-zinc-200 dark:border-dark-border rounded-2xl p-6 shadow-sm">
+                                        <h3 className="text-xl font-bold mb-2 flex items-center gap-2">Interactive Knowledge Graph <NetworkIcon className="w-5 h-5 text-brand-500" /></h3>
+                                        <p className="text-zinc-600 dark:text-zinc-400 mb-4 leading-relaxed">
+                                            Visualize your document workspace like never before. We've added a force-directed graph view that reveals hidden connections between your files and key concepts.
+                                        </p>
+                                        <ul className="space-y-2 text-sm text-zinc-600 dark:text-zinc-400">
+                                            <li className="flex items-start gap-2"><span className="text-brand-500 mt-1">•</span> <span><strong>Dynamic Visualization:</strong> See how documents cluster around topics.</span></li>
+                                            <li className="flex items-start gap-2"><span className="text-brand-500 mt-1">•</span> <span><strong>Smart Analysis:</strong> Gemini analyzes your content to generate semantic links.</span></li>
+                                            <li className="flex items-start gap-2"><span className="text-brand-500 mt-1">•</span> <span><strong>Premium UI:</strong> Custom node rendering with particle effects.</span></li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                {/* v2.5 */}
+                                <div className="relative flex flex-col md:flex-row gap-8 animate-slide-up" style={{ animationDelay: '0.1s' }}>
+                                    <div className="md:w-32 shrink-0 flex md:flex-col items-center md:items-end gap-2 md:text-right">
+                                        <span className="font-mono text-lg font-bold text-zinc-400">v2.5</span>
+                                    </div>
+                                    <div className="absolute left-4 md:left-[8.5rem] -translate-x-1/2 w-3 h-3 rounded-full bg-zinc-300 dark:bg-zinc-700 border-2 border-zinc-50 dark:border-dark-bg"></div>
+                                    <div className="flex-1 bg-white dark:bg-dark-surface border border-zinc-200 dark:border-dark-border rounded-2xl p-6 shadow-sm">
+                                        <h3 className="text-xl font-bold mb-2 flex items-center gap-2">System Prompt Engineering <SparklesIcon className="w-5 h-5 text-purple-500" /></h3>
+                                        <p className="text-zinc-600 dark:text-zinc-400 mb-4 leading-relaxed">
+                                            Take control of the AI's persona. Define custom instructions for each workspace or use our AI enhancer to craft the perfect prompt.
+                                        </p>
+                                        <div className="flex gap-2">
+                                            <span className="px-2 py-1 bg-zinc-100 dark:bg-white/5 rounded text-xs text-zinc-500">Custom Personas</span>
+                                            <span className="px-2 py-1 bg-zinc-100 dark:bg-white/5 rounded text-xs text-zinc-500">AI Enhancement</span>
                                         </div>
-                                        <span className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>DeepSearch AI</span>
-                                    </div>
-                                    <div className="flex items-center gap-4">
-                                        <button
-                                            onClick={toggleDarkMode}
-                                            className={`p-2 rounded-lg ${darkMode ? 'bg-gray-700 text-yellow-400' : 'bg-gray-100 text-gray-600'} hover:opacity-80 transition`}
-                                        >
-                                            {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-                                        </button>
-                                        <button
-                                            onClick={() => setShowLanding(false)}
-                                            className="px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-medium hover:from-indigo-700 hover:to-purple-700 transition"
-                                        >
-                                            Get Started
-                                        </button>
                                     </div>
                                 </div>
-                            </nav>
 
-                            {/* Hero Section */}
-                            <section className="max-w-7xl mx-auto px-6 py-20 text-center">
-                                <div className="mb-8">
-                                    <span className={`inline-block px-4 py-2 rounded-full text-sm font-medium ${darkMode ? 'bg-indigo-900 text-indigo-300' : 'bg-indigo-100 text-indigo-600'} mb-6`}>
-                                        AI-Powered Document Intelligence
-                                    </span>
-                                </div>
-                                <h1 className={`text-5xl md:text-7xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'} mb-6`}>
-                                    Transform Your Internal Documents<br />
-                                    Into <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Intelligent Insights</span>
-                                </h1>
-                                <p className={`text-xl ${darkMode ? 'text-gray-400' : 'text-gray-600'} mb-10 max-w-3xl mx-auto`}>
-                                    Upload your documents, ask questions in natural language, and get instant, accurate answers powered by advanced AI technology.
-                                </p>
-                                <div className="flex items-center justify-center gap-4">
-                                    <button
-                                        onClick={() => setShowLanding(false)}
-                                        className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold text-lg hover:from-indigo-700 hover:to-purple-700 transition shadow-lg shadow-indigo-500/50"
-                                    >
-                                        Start Free Trial
-                                    </button>
-
-                                </div>
-                            </section>
-
-                            {/* Features Grid */}
-                            <section className={`${darkMode ? 'bg-gray-800' : 'bg-gray-50'} py-20`}>
-                                <div className="max-w-7xl mx-auto px-6">
-                                    <div className="text-center mb-16">
-                                        <h2 className={`text-4xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'} mb-4`}>
-                                            Powerful Features for Deep Research
-                                        </h2>
-                                        <p className={`text-xl ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                                            Everything you need to unlock insights from your documents
+                                {/* v2.0 */}
+                                <div className="relative flex flex-col md:flex-row gap-8 animate-slide-up" style={{ animationDelay: '0.2s' }}>
+                                    <div className="md:w-32 shrink-0 flex md:flex-col items-center md:items-end gap-2 md:text-right">
+                                        <span className="font-mono text-lg font-bold text-zinc-400">v2.0</span>
+                                    </div>
+                                    <div className="absolute left-4 md:left-[8.5rem] -translate-x-1/2 w-3 h-3 rounded-full bg-zinc-300 dark:bg-zinc-700 border-2 border-zinc-50 dark:border-dark-bg"></div>
+                                    <div className="flex-1 bg-white dark:bg-dark-surface border border-zinc-200 dark:border-dark-border rounded-2xl p-6 shadow-sm">
+                                        <h3 className="text-xl font-bold mb-2">Persistent Memory & Citations</h3>
+                                        <p className="text-zinc-600 dark:text-zinc-400 mb-0 leading-relaxed">
+                                            The foundation of DeepSearch. We introduced persistent chat history per workspace and accurate, clickable citations for every claim the AI makes.
                                         </p>
                                     </div>
-                                    
-                                    <div className="grid md:grid-cols-3 gap-8">
-                                        {[
-                                            {
-                                                icon: <Upload className="w-8 h-8 text-indigo-600" />,
-                                                title: "Easy Upload",
-                                                description: "Upload PDFs, Word docs, and text files in seconds. Supports multiple file formats."
-                                            },
-                                            {
-                                                icon: <Search className="w-8 h-8 text-purple-600" />,
-                                                title: "Natural Language Search",
-                                                description: "Ask questions in plain English and get precise answers from your documents."
-                                            },
-                                            {
-                                                icon: <Database className="w-8 h-8 text-indigo-600" />,
-                                                title: "Organized Stores",
-                                                description: "Create multiple document stores to keep your research organized by project or topic."
-                                            },
-                                            {
-                                                icon: (
-                                                    <svg className="w-8 h-8 text-purple-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-                                                    </svg>
-                                                ),
-                                                title: "Lightning Fast",
-                                                description: "Get instant answers with our optimized AI search engine. No waiting around."
-                                            },
-                                            {
-                                                icon: (
-                                                    <svg className="w-8 h-8 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                                                        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                                                    </svg>
-                                                ),
-                                                title: "Secure & Private",
-                                                description: "Your documents are encrypted and secured. Only you have access to your data."
-                                            },
-                                            {
-                                                icon: (
-                                                    <svg className="w-8 h-8 text-purple-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-                                                    </svg>
-                                                ),
-                                                title: "Smart Analysis",
-                                                description: "AI understands context and provides comprehensive answers with relevant citations."
-                                            }
-                                        ].map((feature, i) => (
-                                            <div key={i} className={`p-6 ${darkMode ? 'bg-gray-900' : 'bg-white'} rounded-2xl shadow-lg`}>
-                                                <div className="mb-4">{feature.icon}</div>
-                                                <h3 className={`text-xl font-semibold ${darkMode ? 'text-white' : 'text-gray-900'} mb-2`}>
-                                                    {feature.title}
-                                                </h3>
-                                                <p className={darkMode ? 'text-gray-400' : 'text-gray-600'}>
-                                                    {feature.description}
-                                                </p>
-                                            </div>
-                                        ))}
-                                    </div>
                                 </div>
-                            </section>
 
-                            {/* How It Works */}
-                            <section className="max-w-7xl mx-auto px-6 py-20">
-                                <div className="text-center mb-16">
-                                    <h2 className={`text-4xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'} mb-4`}>
-                                        How It Works
-                                    </h2>
-                                    <p className={`text-xl ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                                        Start getting answers in three simple steps
-                                    </p>
-                                </div>
-                                
-                                <div className="grid md:grid-cols-3 gap-12">
-                                    {[
-                                        {
-                                            step: "01",
-                                            title: "Create a Store",
-                                            description: "Set up a document store for your project. Organize research by topic or category."
-                                        },
-                                        {
-                                            step: "02",
-                                            title: "Upload Documents",
-                                            description: "Drag and drop your files. We support PDFs, Word docs, text files, and more."
-                                        },
-                                        {
-                                            step: "03",
-                                            title: "Ask Questions",
-                                            description: "Type your questions naturally. Get instant, accurate answers with source citations."
-                                        }
-                                    ].map((step, i) => (
-                                        <div key={i} className="text-center">
-                                            <div className="mb-6">
-                                                <span className="inline-block w-16 h-16 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-2xl font-bold flex items-center justify-center">
-                                                    {step.step}
-                                                </span>
-                                            </div>
-                                            <h3 className={`text-2xl font-semibold ${darkMode ? 'text-white' : 'text-gray-900'} mb-3`}>
-                                                {step.title}
-                                            </h3>
-                                            <p className={darkMode ? 'text-gray-400' : 'text-gray-600'}>
-                                                {step.description}
-                                            </p>
-                                        </div>
-                                    ))}
-                                </div>
-                            </section>
+                            </div>
 
-                            {/* CTA Section */}
-                            <section className={`${darkMode ? 'bg-gradient-to-r from-gray-800 to-gray-900' : 'bg-gradient-to-r from-indigo-600 to-purple-600'} py-20`}>
-                                <div className="max-w-4xl mx-auto px-6 text-center">
-                                    <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-                                        Ready to Transform Your Research?
-                                    </h2>
-                                    <p className="text-xl text-indigo-100 mb-10">
-                                        Join thousands of researchers, students, and professionals using DeepSearch AI
-                                    </p>
-                                    <button
-                                        onClick={() => setShowLanding(false)}
-                                        className={`px-10 py-4 ${darkMode ? 'bg-white text-gray-900' : 'bg-white text-indigo-600'} rounded-xl font-semibold text-lg hover:shadow-2xl transition transform hover:scale-105`}
-                                    >
-                                        Get Started Free
-                                    </button>
-                                </div>
-                            </section>
-
-                            {/* Footer */}
-                            <footer className={`${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-gray-50 border-gray-200'} border-t py-12`}>
-                                <div className="max-w-7xl mx-auto px-6 text-center">
-                                    <div className="flex items-center justify-center gap-3 mb-4">
-                                        <div className="w-8 h-8 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center">
-                                            <Database className="w-5 h-5 text-white" />
-                                        </div>
-                                        <span className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>DeepSearch AI</span>
-                                    </div>
-                                    <p className={darkMode ? 'text-gray-400' : 'text-gray-600'}>
-                                        © 2025 DeepSearch AI. All rights reserved.
-                                    </p>
-                                </div>
-                            </footer>
-                        </div>
-                    );
-                }
-                
-                return (
-                    <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gradient-to-br from-indigo-50 via-white to-purple-50'} flex items-center justify-center p-4`}>
-                        <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-xl p-8 w-full max-w-md`}>
-                            <div className="absolute top-4 right-4">
-                                <button
-                                    onClick={toggleDarkMode}
-                                    className={`p-2 rounded-lg ${darkMode ? 'bg-gray-700 text-yellow-400' : 'bg-gray-100 text-gray-600'} hover:opacity-80 transition`}
-                                >
-                                    {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-                                </button>
+                            <div className="mt-12 text-center">
+                                <p className="text-zinc-400 text-sm">© 2025 DeepSearch AI. All rights reserved.</p>
                             </div>
-                            
-                            <div className="text-center mb-8">
-                                <div className="w-16 h-16 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl mx-auto mb-4 flex items-center justify-center">
-                                    <Database className="w-8 h-8 text-white" />
-                                </div>
-                                <h1 className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'} mb-2`}>DeepSearch AI</h1>
-                                <p className={darkMode ? 'text-gray-400' : 'text-gray-600'}>Intelligent AI for Deep Research</p>
-                            </div>
-                            
-                            <div className="space-y-4">
-                                <div>
-                                    <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>Email</label>
-                                    <input
-                                        type="email"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        onKeyPress={(e) => handleKeyPress(e, handleAuth)}
-                                        className={`w-full px-4 py-3 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'} focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition`}
-                                        placeholder="you@example.com"
-                                    />
-                                </div>
-                                
-                                <div>
-                                    <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>Password</label>
-                                    <input
-                                        type="password"
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        onKeyPress={(e) => handleKeyPress(e, handleAuth)}
-                                        className={`w-full px-4 py-3 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'} focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition`}
-                                        placeholder="••••••••"
-                                    />
-                                </div>
-                                
-                                <button
-                                    onClick={handleAuth}
-                                    disabled={loading}
-                                    className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 rounded-lg font-medium hover:from-indigo-700 hover:to-purple-700 transition disabled:opacity-50"
-                                >
-                                    {loading ? 'Please wait...' : authMode === 'signin' ? 'Sign In' : 'Sign Up'}
-                                </button>
-                            </div>
-                            
-                            <button
-                                onClick={() => setAuthMode(authMode === 'signin' ? 'signup' : 'signin')}
-                                className="w-full mt-4 text-indigo-600 hover:text-indigo-700 font-medium"
-                            >
-                                {authMode === 'signin' ? 'Need an account? Sign up' : 'Already have an account? Sign in'}
-                            </button>
                         </div>
                     </div>
                 );
             }
 
-            return (
-                <div className={`flex h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
-                    <div className={`${sidebarOpen ? 'w-80' : 'w-0'} ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-r transition-all duration-300 overflow-hidden flex flex-col`}>
-                        <div className={`p-6 ${darkMode ? 'border-gray-700' : 'border-gray-200'} border-b`}>
-                            <div className="flex items-center justify-between mb-6">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center">
-                                        <Database className="w-5 h-5 text-white" />
-                                    </div>
-                                    <h1 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>DeepSearch</h1>
+            if (view === 'auth') {
+                return (
+                    <div className="min-h-screen bg-zinc-50 dark:bg-dark-bg flex items-center justify-center p-4 relative">
+                        <div className="absolute top-6 right-6"><ThemeToggle darkMode={darkMode} setDarkMode={setDarkMode} /></div>
+                        <div className="absolute top-6 left-6">
+                            <button onClick={() => setView('landing')} className="flex items-center gap-2 text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-white transition text-sm font-medium">
+                                <ArrowLeftIcon className="w-4 h-4" /> Back to Home
+                            </button>
+                        </div>
+
+                        <div className="w-full max-w-md bg-white dark:bg-dark-surface rounded-2xl shadow-xl border border-zinc-100 dark:border-dark-border p-8 animate-slide-up">
+                            <div className="text-center mb-8">
+                                <div className="w-12 h-12 bg-gradient-to-tr from-brand-600 to-brand-500 rounded-xl flex items-center justify-center text-white mx-auto mb-4 shadow-lg shadow-brand-500/30"><DatabaseIcon className="w-6 h-6" /></div>
+                                <h2 className="text-2xl font-bold dark:text-white mb-2">{authMode === 'signin' ? 'Welcome Back' : 'Create Account'}</h2>
+                                <p className="text-zinc-500 dark:text-zinc-400 text-sm">Enter your credentials to access your workspace</p>
+                            </div>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5 ml-1">Email Address</label>
+                                    <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-black/20 border border-zinc-200 dark:border-dark-border dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition" />
                                 </div>
-                                <button
-                                onClick={handleLogout}
-                                className="flex items-center gap-2 text-gray-400 hover:text-gray-600"
-                                >
-                                <LogOut className="w-5 h-5" />
-                                <span className="font-medium">Logout</span>
+                                <div>
+                                    <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5 ml-1">Password</label>
+                                    <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-black/20 border border-zinc-200 dark:border-dark-border dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition" />
+                                </div>
+                                <button onClick={handleAuth} disabled={loading} className="w-full bg-brand-600 text-white py-3.5 rounded-xl font-bold hover:bg-brand-700 transition disabled:opacity-50 shadow-lg shadow-brand-600/20 mt-2">
+                                    {loading ? 'Processing...' : (authMode === 'signin' ? 'Sign In' : 'Create Account')}
                                 </button>
                             </div>
-                            
-                            <div className="flex gap-2">
-                                <input
-                                    type="text"
-                                    value={newStoreName}
-                                    onChange={(e) => setNewStoreName(e.target.value)}
-                                    onKeyPress={(e) => handleKeyPress(e, createStore)}
-                                    placeholder="New store name"
-                                    className={`flex-1 px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'} text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none`}
-                                />
-                                <button
-                                    onClick={createStore}
-                                    disabled={loading}
-                                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition disabled:opacity-50"
-                                >
-                                    <Plus className="w-4 h-4" />
+                            <div className="mt-6 text-center border-t border-zinc-100 dark:border-dark-border pt-6">
+                                <button onClick={() => setAuthMode(authMode === 'signin' ? 'signup' : 'signin')} className="text-sm text-zinc-500 dark:text-zinc-400 hover:text-brand-600 dark:hover:text-brand-400 transition">
+                                    {authMode === 'signin' ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
                                 </button>
                             </div>
                         </div>
-                        
-                        <div className="flex-1 overflow-y-auto p-4">
-                            <h2 className={`text-xs font-semibold ${darkMode ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider mb-3`}>Your Stores</h2>
-                            <div className="space-y-2">
-                                {stores.map((store) => (
-                                    <div
-                                        key={store.resource_name}
-                                        className={`p-3 rounded-lg cursor-pointer transition ${
-                                            selectedStore?.resource_name === store.resource_name
-                                                ? darkMode ? 'bg-indigo-900 border border-indigo-700' : 'bg-indigo-50 border border-indigo-200'
-                                                : darkMode ? 'hover:bg-gray-700 border border-transparent' : 'hover:bg-gray-50 border border-transparent'
-                                        }`}
-                                    >
-                                        <div className="flex items-center justify-between" onClick={() => selectStore(store)}>
-                                            <div className="flex items-center gap-2 flex-1 min-w-0">
-                                                <Database className="w-4 h-4 text-indigo-600 flex-shrink-0" />
-                                                <span className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'} truncate`}>{store.display_name}</span>
+                    </div>
+                );
+            }
+
+            // MAIN APP DASHBOARD
+            return (
+                <div className="flex h-screen bg-zinc-50 dark:bg-dark-bg overflow-hidden text-sm font-sans">
+
+                    {/* LEFT SIDEBAR */}
+                    <aside className={`${leftSidebarOpen ? 'w-72 translate-x-0' : 'w-0 -translate-x-full opacity-0'} fixed md:static inset-y-0 z-30 bg-white dark:bg-dark-surface border-r border-zinc-200 dark:border-dark-border flex flex-col transition-all duration-300 ease-in-out`}>
+                        <div className="h-16 flex items-center px-5 border-b border-zinc-200 dark:border-dark-border shrink-0 justify-between">
+                            <div className="flex items-center gap-2.5 font-bold text-zinc-800 dark:text-white text-lg">
+                                <div className="w-8 h-8 bg-gradient-to-tr from-brand-600 to-brand-500 rounded-lg flex items-center justify-center text-white"><DatabaseIcon className="w-4 h-4" /></div>
+                                DeepSearch
+                            </div>
+                            <button onClick={() => setLeftSidebarOpen(false)} className="md:hidden text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"><Icon><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></Icon></button>
+                        </div>
+
+                        <div className="p-4 shrink-0">
+                            <div className="flex items-center w-full h-10 rounded-lg border border-zinc-200 dark:border-dark-border bg-zinc-50 dark:bg-black/20 overflow-hidden focus-within:ring-2 ring-brand-500/50 transition">
+                                <input value={newStoreName} onChange={e => setNewStoreName(e.target.value)} placeholder="New Workspace..." className="flex-1 px-3 bg-transparent outline-none dark:text-white min-w-0 placeholder-zinc-400" />
+                                <button onClick={createStore} className="h-full px-3 bg-white dark:bg-white/5 border-l border-zinc-200 dark:border-dark-border text-zinc-500 hover:text-brand-600 dark:hover:text-white transition"><PlusIcon className="w-4 h-4" /></button>
+                            </div>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto px-3 space-y-1 pb-4">
+                            <div className="px-2 mb-2 text-xs font-bold text-zinc-400 uppercase tracking-wider">Your Workspaces</div>
+                            {stores.map(s => (
+                                <div key={s.resource_name} onClick={() => selectStore(s)} className={`group flex items-center justify-between px-3 py-2.5 rounded-lg cursor-pointer transition ${selectedStore?.resource_name === s.resource_name ? 'bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-300 font-medium' : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/5'}`}>
+                                    <span className="truncate">{s.display_name}</span>
+                                    <button onClick={(e) => { e.stopPropagation(); deleteStore(s.display_name) }} className="opacity-0 group-hover:opacity-100 p-1.5 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-white/5 rounded-md transition"><TrashIcon className="w-3.5 h-3.5" /></button>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="p-4 border-t border-zinc-200 dark:border-dark-border shrink-0 bg-white dark:bg-dark-surface">
+                            <div className="flex items-center gap-3 mb-3">
+                                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-sm shadow-sm">{user?.email?.[0]?.toUpperCase() || '?'}</div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="truncate font-medium dark:text-white">{user?.email?.split('@')[0] || 'User'}</div>
+                                    <div className="truncate text-xs text-zinc-500">{user?.email || ''}</div>
+                                </div>
+                            </div>
+                            <button onClick={handleLogout} className="w-full py-2 text-xs font-medium text-zinc-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg transition text-left px-2">Sign Out</button>
+                        </div>
+                    </aside>
+
+                    {/* CENTER: CHAT */}
+                    <main className="flex-1 flex flex-col min-w-0 bg-white dark:bg-dark-bg relative z-0">
+                        <header className="h-16 border-b border-zinc-200 dark:border-dark-border flex items-center justify-between px-4 lg:px-6 bg-white/80 dark:bg-dark-bg/80 backdrop-blur-md sticky top-0 z-20">
+                            <div className="flex items-center gap-3">
+                                <button onClick={() => setLeftSidebarOpen(!leftSidebarOpen)} className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-white/5 text-zinc-500 dark:text-zinc-400 transition"><SidebarIcon className="w-5 h-5" /></button>
+                                <h1 className="font-semibold text-zinc-800 dark:text-white truncate max-w-[200px] md:max-w-md text-base">{selectedStore ? selectedStore.display_name : "Dashboard"}</h1>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <ThemeToggle darkMode={darkMode} setDarkMode={setDarkMode} />
+                                {selectedStore && (
+                                    <>
+                                        <button onClick={toggleViewMode} className={`p-2 rounded-lg transition ${viewMode === 'graph' ? 'bg-brand-50 text-brand-600 dark:bg-brand-900/30 dark:text-brand-300' : 'text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/5'}`} title="Toggle Graph View"><NetworkIcon className="w-5 h-5" /></button>
+                                        <button onClick={() => setShowSettings(true)} className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-white/5 text-zinc-500 dark:text-zinc-400 transition"><SettingsIcon className="w-5 h-5" /></button>
+                                        <button onClick={() => setRightSidebarOpen(!rightSidebarOpen)} className={`p-2 rounded-lg transition ${rightSidebarOpen ? 'bg-brand-50 text-brand-600 dark:bg-brand-900/30 dark:text-brand-300' : 'text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/5'}`}><FileIcon className="w-5 h-5" /></button>
+                                    </>
+                                )}
+                            </div>
+                        </header>
+
+                        {viewMode === 'chat' ? (
+                            <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-8 scroll-smooth">
+                                {!selectedStore ? (
+                                    <div className="h-full flex flex-col items-center justify-center text-zinc-400">
+                                        <div className="w-20 h-20 bg-zinc-100 dark:bg-white/5 rounded-2xl flex items-center justify-center mb-6"><DatabaseIcon className="w-10 h-10 opacity-30" /></div>
+                                        <p className="text-lg font-medium">Select a workspace to begin research</p>
+                                    </div>
+                                ) : chatLoading ? (
+                                    <div className="h-full flex flex-col items-center justify-center">
+                                        <div className="loader text-brand-600 mb-4"></div>
+                                        <p className="text-zinc-400 text-sm animate-pulse">Loading memory...</p>
+                                    </div>
+                                ) : messages.length === 0 ? (
+                                    <div className="h-full flex flex-col items-center justify-center text-center px-4 animate-fade-in">
+                                        <div className="w-16 h-16 bg-gradient-to-tr from-brand-600 to-brand-400 rounded-2xl flex items-center justify-center text-white mb-6 shadow-xl shadow-brand-500/20"><DatabaseIcon className="w-8 h-8" /></div>
+                                        <h3 className="text-2xl font-bold text-zinc-900 dark:text-white mb-3">Welcome to New Workspace </h3>
+                                        <p className="text-zinc-500 dark:text-zinc-400 max-w-sm leading-relaxed">
+                                            Bring your documents together. Reveal what matters.                                        </p>
+                                    </div>
+                                ) : (
+                                    messages.map((msg, idx) => (
+                                        <div key={idx} className={`flex gap-4 max-w-3xl mx-auto ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-slide-up`}>
+                                            {msg.role === 'model' && <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-600 to-brand-500 flex-shrink-0 flex items-center justify-center text-white text-xs font-bold shadow-md mt-1">AI</div>}
+                                            <div className={`max-w-[85%] lg:max-w-[80%] space-y-2`}>
+                                                <div className={`p-5 rounded-2xl shadow-sm leading-relaxed ${msg.role === 'user'
+                                                    ? 'bg-brand-600 text-white rounded-br-none'
+                                                    : 'bg-white dark:bg-dark-surface border border-zinc-200 dark:border-dark-border text-zinc-800 dark:text-zinc-200 rounded-bl-none'
+                                                    }`}>
+                                                    {msg.role === 'user' ? (
+                                                        <p>{msg.content}</p>
+                                                    ) : (
+                                                        <div className="markdown-content" dangerouslySetInnerHTML={{ __html: marked.parse(msg.content || "") }} />
+                                                    )}
+                                                </div>
+
+                                                {/* CITATIONS */}
+                                                {msg.citations && msg.citations.length > 0 && (
+                                                    <div className="grid gap-2 sm:grid-cols-2 pt-1">
+                                                        {msg.citations.map((cite, cIdx) => (
+                                                            <div key={cIdx} title={cite.preview || ""} className="flex items-start gap-2 p-2.5 rounded-lg bg-white dark:bg-dark-surface border border-zinc-200 dark:border-dark-border text-xs text-zinc-600 dark:text-zinc-400 hover:border-brand-400 dark:hover:border-brand-600 transition-colors cursor-default shadow-sm group">
+                                                                <BookIcon className="w-3.5 h-3.5 mt-0.5 text-brand-500 shrink-0 group-hover:text-brand-600" />
+                                                                <span className="line-clamp-2 leading-snug">{cite.title || cite}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+
+                                                {/* SUGGESTIONS */}
+                                                {msg.suggestions && msg.suggestions.length > 0 && (
+                                                    <div className="flex flex-wrap gap-2 pt-2">
+                                                        {msg.suggestions.map((sugg, i) => (
+                                                            <button
+                                                                key={i}
+                                                                onClick={() => handleQuery(sugg)}
+                                                                className="text-xs font-medium bg-zinc-100 dark:bg-white/5 text-zinc-600 dark:text-zinc-300 px-3 py-1.5 rounded-full border border-zinc-200 dark:border-dark-border hover:bg-brand-50 dark:hover:bg-brand-900/30 hover:text-brand-600 dark:hover:text-brand-300 hover:border-brand-200 dark:hover:border-brand-700/50 transition text-left"
+                                                            >
+                                                                {sugg}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                )}
                                             </div>
+                                        </div>
+                                    ))
+                                )}
+                                {loading && (
+                                    <div className="flex gap-4 max-w-3xl mx-auto animate-fade-in">
+                                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-600 to-brand-500 flex items-center justify-center text-white text-xs font-bold mt-1">AI</div>
+                                        <div className="bg-white dark:bg-dark-surface border border-zinc-200 dark:border-dark-border p-4 rounded-2xl rounded-bl-none flex items-center gap-1.5 shadow-sm">
+                                            <span className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce"></span>
+                                            <span className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce delay-100"></span>
+                                            <span className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce delay-200"></span>
+                                        </div>
+                                    </div>
+                                )}
+                                <div ref={chatEndRef} />
+                            </div>
+                        ) : (
+                            <div className="flex-1 relative overflow-hidden bg-zinc-50 dark:bg-black/20">
+                                {graphLoading ? (
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                        <div className="loader text-brand-600 mb-4"></div>
+                                        <p className="text-zinc-400 text-sm animate-pulse">Analyzing connections...</p>
+                                    </div>
+                                ) : (
+                                    <ForceGraph2D
+                                        graphData={graphData}
+                                        nodeLabel="id"
+                                        nodeColor={node => {
+                                            if (node.group === 1) return '#6366f1'; // Brand color for Docs
+                                            if (node.group === 2) return '#ec4899'; // Pink for Topics
+                                            return '#8b5cf6'; // Violet for others
+                                        }}
+                                        backgroundColor={darkMode ? '#09090b' : '#ffffff'}
+                                        linkColor={() => darkMode ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)'}
+                                        linkDirectionalParticles={2}
+                                        linkDirectionalParticleSpeed={d => 0.005}
+                                        linkDirectionalParticleWidth={2}
+                                        nodeCanvasObject={(node, ctx, globalScale) => {
+                                            const label = node.id;
+                                            const fontSize = 12 / globalScale;
+                                            ctx.font = `${fontSize}px Sans-Serif`;
+                                            const textWidth = ctx.measureText(label).width;
+                                            const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.2); // some padding
+
+                                            ctx.fillStyle = 'rgba(255, 255, 255, 0.0)'; // Transparent bg
+
+                                            // Draw Node Circle
+                                            ctx.beginPath();
+                                            const r = node.val ? Math.sqrt(node.val) * 2 : 4;
+                                            ctx.arc(node.x, node.y, r, 0, 2 * Math.PI, false);
+                                            ctx.fillStyle = node.group === 1 ? '#6366f1' : (node.group === 2 ? '#ec4899' : '#8b5cf6');
+                                            ctx.fill();
+
+                                            // Draw Label
+                                            ctx.textAlign = 'center';
+                                            ctx.textBaseline = 'middle';
+                                            ctx.fillStyle = darkMode ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.8)';
+                                            ctx.fillText(label, node.x, node.y + r + fontSize);
+
+                                            node.__bckgDimensions = bckgDimensions; // to re-use in nodePointerAreaPaint
+                                        }}
+                                        nodePointerAreaPaint={(node, color, ctx) => {
+                                            ctx.fillStyle = color;
+                                            const bckgDimensions = node.__bckgDimensions;
+                                            bckgDimensions && ctx.fillRect(node.x - bckgDimensions[0] / 2, node.y - bckgDimensions[1] / 2, ...bckgDimensions);
+                                        }}
+                                    />
+                                )}
+                            </div>
+                        )}
+
+                        {selectedStore && viewMode === 'chat' && (
+                            <div className="p-4 lg:p-6 bg-white dark:bg-dark-bg border-t border-zinc-200 dark:border-dark-border shrink-0">
+                                <div className="max-w-3xl mx-auto relative">
+                                    {messages.length > 0 && (
+                                        <button onClick={() => setMessages([])} className="absolute -top-12 right-0 bg-white dark:bg-dark-surface border border-zinc-200 dark:border-dark-border px-3 py-1.5 rounded-full text-xs font-medium text-zinc-500 hover:bg-zinc-50 dark:hover:bg-white/5 flex items-center gap-1.5 transition shadow-sm"><RefreshIcon className="w-3 h-3" /> Clear View</button>
+                                    )}
+                                    <div className="relative flex items-end gap-2 bg-zinc-100 dark:bg-black/20 border border-transparent focus-within:border-brand-500/50 focus-within:bg-white dark:focus-within:bg-dark-surface focus-within:ring-4 focus-within:ring-brand-500/10 rounded-xl p-2 transition-all shadow-inner">
+                                        <textarea
+                                            value={query}
+                                            onChange={e => setQuery(e.target.value)}
+                                            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleQuery(); } }}
+                                            placeholder="Ask a question or request a summary..."
+                                            className="w-full bg-transparent border-none focus:ring-0 resize-none max-h-32 min-h-[44px] py-2.5 px-3 text-zinc-900 dark:text-white placeholder-zinc-400 text-sm"
+                                            disabled={loading}
+                                        />
+                                        <button onClick={() => handleQuery()} disabled={!query.trim() || loading} className="p-2.5 bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:bg-zinc-400 transition shadow-md mb-0.5">
+                                            <SendIcon className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                    <div className="text-center mt-3 text-[11px] text-zinc-400 font-medium">AI can make mistakes. Please verify citations.</div>
+                                </div>
+                            </div>
+                        )}
+                    </main>
+
+                    {/* RIGHT SIDEBAR */}
+                    {selectedStore && (
+                        <aside className={`${rightSidebarOpen ? 'w-80 translate-x-0' : 'w-0 translate-x-full opacity-0'} fixed lg:static inset-y-0 right-0 z-30 bg-white dark:bg-dark-surface border-l border-zinc-200 dark:border-dark-border flex flex-col transition-all duration-300 ease-in-out shadow-xl lg:shadow-none`}>
+                            <div className="h-16 flex items-center px-5 border-b border-zinc-200 dark:border-dark-border justify-between shrink-0 bg-zinc-50/50 dark:bg-white/5">
+                                <h3 className="font-bold text-zinc-800 dark:text-white flex items-center gap-2.5"><FileIcon className="w-4 h-4 text-brand-500" /> Sources <span className="text-xs bg-zinc-200 dark:bg-white/10 px-2 py-0.5 rounded-full text-zinc-600 dark:text-zinc-400">{documents.length}</span></h3>
+                                <button onClick={() => setRightSidebarOpen(false)} className="lg:hidden text-zinc-400 hover:text-zinc-600"><Icon><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></Icon></button>
+                            </div>
+
+                            <div className="p-5 border-b border-zinc-200 dark:border-dark-border shrink-0">
+                                <label className={`flex flex-col items-center justify-center w-full h-28 rounded-xl border-2 border-dashed cursor-pointer transition group ${uploadProgress ? 'border-brand-400 bg-brand-50 dark:bg-brand-900/20' : 'border-zinc-300 dark:border-dark-border hover:border-brand-400 dark:hover:border-brand-500 hover:bg-zinc-50 dark:hover:bg-white/5'}`}>
+                                    {uploadProgress ? (
+                                        <div className="loader text-brand-500"></div>
+                                    ) : (
+                                        <>
+                                            <div className="p-2 bg-zinc-100 dark:bg-white/5 rounded-lg group-hover:scale-110 transition duration-200 mb-2"><UploadIcon className="w-5 h-5 text-zinc-400 group-hover:text-brand-500" /></div>
+                                            <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 group-hover:text-brand-600 dark:group-hover:text-brand-400">Click to Upload Documents</span>
+                                        </>
+                                    )}
+                                    <input type="file" onChange={uploadFile} className="hidden" disabled={uploadProgress} />
+                                </label>
+                            </div>
+
+                            <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                                {documents.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center h-40 text-center text-zinc-400 px-6">
+                                        <p className="text-xs mb-2">No documents yet.</p>
+                                        <p className="text-[10px] opacity-70">Upload files to start searching context.</p>
+                                    </div>
+                                ) : (
+                                    documents.map(doc => (
+                                        <div key={doc.resource_name} className="group p-3 bg-white dark:bg-dark-bg border border-zinc-200 dark:border-dark-border rounded-xl hover:border-brand-300 dark:hover:border-brand-700 hover:shadow-md transition flex items-start gap-3 relative">
+                                            <div className="p-2 bg-brand-50 dark:bg-brand-900/20 rounded-lg text-brand-600 dark:text-brand-400 shrink-0"><FileIcon className="w-4 h-4" /></div>
+                                            <div className="min-w-0 flex-1">
+                                                <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-200 truncate leading-tight" title={doc.display_name}>{doc.display_name}</p>
+                                                <p className="text-[10px] text-zinc-400 uppercase mt-1 tracking-wide font-medium">{doc.mime_type.split('/')[1]}</p>
+                                            </div>
+                                            <button onClick={() => deleteDocument(doc.resource_name)} className="opacity-0 group-hover:opacity-100 absolute top-2 right-2 p-1.5 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-white/5 rounded-md transition"><TrashIcon className="w-3.5 h-3.5" /></button>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </aside>
+                    )}
+
+                    {/* SETTINGS MODAL */}
+                    {showSettings && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                            <div className="w-full max-w-lg bg-white dark:bg-dark-surface rounded-2xl shadow-2xl border border-zinc-200 dark:border-dark-border overflow-hidden animate-slide-up">
+                                <div className="p-6 border-b border-zinc-200 dark:border-dark-border flex justify-between items-center">
+                                    <h3 className="text-lg font-bold dark:text-white">Workspace Settings</h3>
+                                    <button onClick={() => setShowSettings(false)} className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"><Icon><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></Icon></button>
+                                </div>
+                                <div className="p-6 space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">System Prompt</label>
+                                        <div className="relative">
+                                            <textarea
+                                                value={systemPrompt}
+                                                onChange={e => setSystemPrompt(e.target.value)}
+                                                className="w-full h-40 p-4 rounded-xl bg-zinc-50 dark:bg-black/20 border border-zinc-200 dark:border-dark-border dark:text-white focus:ring-2 focus:ring-brand-500 outline-none resize-none text-sm leading-relaxed"
+                                                placeholder="e.g., You are a helpful assistant. Answer concisely."
+                                            />
                                             <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    deleteStore(store.display_name);
-                                                }}
-                                                className={`${darkMode ? 'text-gray-500 hover:text-red-400' : 'text-gray-400 hover:text-red-600'} p-1`}
+                                                onClick={handleEnhancePrompt}
+                                                disabled={enhancing || !systemPrompt.trim()}
+                                                className="absolute bottom-3 right-3 px-3 py-1.5 bg-brand-100 dark:bg-brand-900/40 text-brand-700 dark:text-brand-300 text-xs font-semibold rounded-lg hover:bg-brand-200 dark:hover:bg-brand-900/60 transition flex items-center gap-1.5 disabled:opacity-50"
                                             >
-                                                <Trash2 className="w-4 h-4" />
+                                                {enhancing ? <div className="loader w-3 h-3 border-brand-600" /> : <SparklesIcon className="w-3.5 h-3.5" />}
+                                                Enhance
                                             </button>
                                         </div>
                                     </div>
-                                ))}
+                                    <div>
+                                        <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2 uppercase tracking-wider">Sample Prompts</label>
+                                        <div className="flex flex-wrap gap-2">
+                                            {["Summarize concisely", "Explain like I'm 5", "Detailed analysis", "Code expert"].map(p => (
+                                                <button key={p} onClick={() => setSystemPrompt(p)} className="px-3 py-1.5 rounded-full border border-zinc-200 dark:border-dark-border text-xs text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-white/5 transition">{p}</button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="p-6 border-t border-zinc-200 dark:border-dark-border bg-zinc-50 dark:bg-black/20 flex justify-end gap-3">
+                                    <button onClick={() => setShowSettings(false)} className="px-4 py-2 text-zinc-600 dark:text-zinc-300 font-medium hover:bg-zinc-200 dark:hover:bg-white/10 rounded-lg transition">Cancel</button>
+                                    <button onClick={saveSettings} className="px-6 py-2 bg-brand-600 text-white font-bold rounded-lg hover:bg-brand-700 transition shadow-lg shadow-brand-600/20">Save Changes</button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-
-                    <div className="flex-1 flex flex-col">
-                        <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b px-6 py-4 flex items-center gap-4`}>
-                            <button
-                                onClick={() => setSidebarOpen(!sidebarOpen)}
-                                className={darkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'}
-                            >
-                                {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-                            </button>
-                            
-                            {user && (
-                                <div className="flex-1">
-                                <h2 className={`text-md font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                                Hello {user.email.split("@")[0]}!
-                                </h2>
-
-                                    {selectedStore && (
-                                        <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                            {selectedStore.display_name} • {documents.length} documents
-                                        </p>
-                                    )}
-                                </div>
-                            )}
-                            
-                            <button
-                                onClick={toggleDarkMode}
-                                className={`p-2 rounded-lg ${darkMode ? 'bg-gray-700 text-yellow-400' : 'bg-gray-100 text-gray-600'} hover:opacity-80 transition`}
-                            >
-                                {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-                            </button>
-                            
-                            {selectedStore && (
-                                <label className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition cursor-pointer flex items-center gap-2">
-                                    <Upload className="w-4 h-4" />
-                                    <span>{uploadProgress ? 'Uploading...' : 'Upload File'}</span>
-                                    <input type="file" onChange={uploadFile} className="hidden" disabled={uploadProgress} />
-                                </label>
-                            )}
-                        </div>
-
-                        <div className="flex-1 overflow-auto">
-                            {!selectedStore ? (
-                                <div className={`flex items-center justify-center h-full ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-                                    <div className="text-center">
-                                        <Database className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                                        <p className="text-lg">Select or create a store to get started</p>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="p-6 max-w-5xl mx-auto">
-                                    <div className="mb-8">
-                                        <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-sm border p-4`}>
-                                            <div className="flex gap-3">
-                                                <input
-                                                    type="text"
-                                                    value={query}
-                                                    onChange={(e) => setQuery(e.target.value)}
-                                                    onKeyPress={(e) => handleKeyPress(e, handleQuery)}
-                                                    placeholder="Ask a question about your documents..."
-                                                    className={`flex-1 px-4 py-3 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'border-gray-300'} focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none`}
-                                                />
-                                                <button
-                                                    onClick={handleQuery}
-                                                    disabled={loading}
-                                                    className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-medium hover:from-indigo-700 hover:to-purple-700 transition disabled:opacity-50 flex items-center gap-2"
-                                                >
-                                                    <Search className="w-4 h-4" />
-                                                    Search
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {queryResult && (
-                                        <div className={`mb-8 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-sm border p-6`}>
-                                            <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'} mb-4`}>Answer</h3>
-                                            <div 
-                                                className={`markdown-content ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}
-                                                dangerouslySetInnerHTML={{ __html: marked.marked ? marked.marked(queryResult) : marked(queryResult) }}
-                                            />
-                                        </div>
-                                    )}
-
-                                    <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-sm border`}>
-                                        <div className={`p-4 ${darkMode ? 'border-gray-700' : 'border-gray-200'} border-b`}>
-                                            <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Documents</h3>
-                                        </div>
-                                        <div className={`divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
-                                            {documents.length === 0 ? (
-                                                <div className={`p-8 text-center ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-                                                    <FileText className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                                                    <p>No documents yet. Upload files to get started.</p>
-                                                </div>
-                                            ) : (
-                                                documents.map((doc) => (
-                                                    <div key={doc.resource_name} className={`p-4 ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'} transition flex items-center justify-between`}>
-                                                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                                                            <FileText className="w-5 h-5 text-indigo-600 flex-shrink-0" />
-                                                            <div className="min-w-0 flex-1">
-                                                                <p className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'} truncate`}>{doc.display_name}</p>
-                                                                <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{doc.mime_type}</p>
-                                                            </div>
-                                                        </div>
-                                                        <button
-                                                            onClick={() => deleteDocument(doc.resource_name)}
-                                                            className={`${darkMode ? 'text-gray-500 hover:text-red-400' : 'text-gray-400 hover:text-red-600'} p-2`}
-                                                        >
-                                                            <Trash2 className="w-4 h-4" />
-                                                        </button>
-                                                    </div>
-                                                ))
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
+                    )}
                 </div>
             );
         }
-
-        ReactDOM.render(<App />, document.getElementById('root'));
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     </script>
 </body>
+
 </html>
